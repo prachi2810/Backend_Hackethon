@@ -3,7 +3,6 @@ const Website=require('../schemas/Website')
 getHomePage = (req, res) => {
     res.send('Hello, world!');
   };
-  
 getData = async(req, res) => {
                 const id=(req.params.id);
                 try{
