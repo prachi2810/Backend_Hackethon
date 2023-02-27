@@ -1,25 +1,21 @@
 require('dotenv').config();
-const express=require('express');
-const router=require('./Router/pageRoute');
-const mongoose=require('mongoose');
+const userRouter=require('./Router/userRoute');
+const PORT=process.env.PORT || 8000;
+const express = require('express')
+const cors = require('cors');
+const bodyParser = require('body-parser');
+const app = express()
+const mainRoute=require('./Router/mainRoute')
+const cookieParser=require('cookie-parser')
 
-const app=express();
-app.use(express.json());
-
-const PORT=process.env.PORT || 9101;
-
-const mongoUri='mongodb://localhost:27017/webpage_builder';
-
-mongoose.set('strictQuery', false);
-mongoose.connect(mongoUri,{useNewUrlParser: true})
-
-mongoose.connection.on('open',()=>{
-   console.log("Connected to local Database...");
+require('./db')
+app.use(cors({ origin: 'http://localhost:3000',credentials:true}))
+app.use(cookieParser())
+app.use(bodyParser.json({ limit: '50mb' }));
+app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
+app.use(express.json())
+app.use('/',mainRoute);
+app.use('/user',userRouter)
+app.listen(PORT, () => {
+  console.log(`App listening on port ${PORT}`)
 })
-
-app.use('/api',router)
-
-app.listen(PORT,()=>{
-    console.log(`Server is running on port ${PORT}`);
-})
-

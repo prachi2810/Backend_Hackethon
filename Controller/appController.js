@@ -2,18 +2,33 @@ const UserModel = require("../Model/userModel");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const otpGenerator = require("otp-generator");
+const { response } = require("express");
 const Key = process.env.USER_KEY;
-
 async function verifyUser(req, res, next) {
-    try {
-        const { username } = req.method == "GET" ? req.query : req.body;
-        let exist = await UserModel.findOne({ username: username });
-        // console.log(username);
-        if (!exist) return res.status(404).send({ error: "Can't find User" });
-        next()
-    } catch (error) {
-        return res.status(404).send({ error: "Auth error" });
+    // try {
+    //     const { username } = req.method == "GET" ? req.query : req.body;
+    //     let exist = await UserModel.findOne({ username: username });
+    //     // console.log(username);
+    //     if (!exist) return res.status(404).send({ error: "Can't find User" });
+    //     next()
+    // } catch (error) {
+    //     return res.status(404).send({ error: "Auth error" });
+    // }
+    const token=req.cookies.token;
+
+    try{
+        if(!token)
+        res.status(401).send('Access denied..');
+        else{
+        const decoded=jwt.verify(token,Key);
+        res.send(decoded)
+        }
     }
+    catch(err){
+        res.clearCookie('token');
+        return res.status(400).send(err.messsage);
+    }
+
 }
 
 async function register(req, res) {
@@ -63,16 +78,12 @@ async function register(req, res) {
 
 async function login(req, res) {
     const { username, password } = req.body;
-
     existUsername = await UserModel.findOne({ username: username });
     if (existUsername) {
         bcrypt.compare(password, existUsername.password).then((passwordCheck) => {
             if (!passwordCheck)
                 return res.status(400).json({ message: "Don't have Password" });
-
-            // if(passwordCheck)
-            // return res.status(400).json({message:"Login Successful"});
-
+                else{
             const token = jwt.sign(
                 {
                     userId: existUsername._id,
@@ -81,20 +92,14 @@ async function login(req, res) {
                 Key,
                 { expiresIn: "24h" }
             );
+            res.status(200).cookie("token",token,{domain:'localhost',httpOnly:true}).json(existUsername)
+                }
 
-            // console.log(userID);
-            return res.status(200).send({
-                message: "Login Successful...!",
-                email: existUsername.email,
-                username: existUsername.username,
-                token: token,
-            });
         });
     } else {
         return res.status(400).json({ message: "Invalid Username" });
     }
 }
-
 async function getuser(req, res) {
     // res.json('GetUser route');
 
