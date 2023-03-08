@@ -1,3 +1,4 @@
+const { ObjectID } = require('bson');
 const mongoose=require('mongoose');
 
 const Page=mongoose.Schema({
@@ -12,7 +13,8 @@ const Page=mongoose.Schema({
         type:String,
         required:true,
     },
-    content:Object
+    content:Object,
+  
 
 },{timestamp:true})
 

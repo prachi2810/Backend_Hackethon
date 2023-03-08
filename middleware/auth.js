@@ -2,13 +2,21 @@ const jwt = require("jsonwebtoken");
 const Key = process.env.USER_KEY;
 
 async function Auth(req, res, next) {
-    try {
-        const token = req.headers.authorization.split(" ")[1];
-        const decodedToken = await jwt.verify(token, Key);
-        req.user = decodedToken;
-        next();
-    } catch (error) {
-        res.status(401).json({ error: "Auth failed1" });
+    const token=req.cookies.token;
+    try{
+        if(!token){
+        res.status(401).send('Access denied..');
+        }
+        else{
+        const decoded=jwt.verify(token,Key);
+        // res.send(decoded)
+        res.user=decoded;
+        next()
+        }
+    }
+    catch(err){
+        res.clearCookie('token');
+        return res.status(400).send(err.messsage);
     }
 }
 
