@@ -5,6 +5,7 @@ const templateSchema = new Schema({
   html: { type: String},
   css: { type: Object},
   assets: { type: [String] },
+  tags:{type:[String]},
   userId:{
     type:mongoose.Schema.Types.ObjectId,
    },
@@ -13,6 +14,6 @@ const templateSchema = new Schema({
     ref: 'uploads.files'
   },
    name:String,
-   domain:String
+   
 });
 module.exports = mongoose.model('Template', templateSchema);

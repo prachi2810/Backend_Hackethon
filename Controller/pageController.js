@@ -11,9 +11,9 @@ getPage = async(req, res) => {
 
   }
 savePage=async(req,res)=>{
-          const {html,css,assets,userId}=req.body;
+          const {html,css,assets,userId,name}=req.body;
          try{
-                const newData=new Website({html,css,assets,userId});
+                const newData=new Website({html,css,assets,userId,name});
                  const savedData=await newData.save();
                  res.send(savedData)
          }catch(err){

@@ -28,4 +28,4 @@ async function localVeriables(req, res, next) {
     next();
 }
 
-module.exports = Auth, localVeriables;
+module.exports ={ Auth, localVeriables};

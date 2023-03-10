@@ -3,11 +3,13 @@ const UserModelGoogle = require("../Model/userModelGoogle");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const otpGenerator = require("otp-generator");
+const mailer=require('nodemailer')
+const {registermail,OTPmail}=require('./mailer')
 const { response } = require("express");
+const userModel = require("../Model/userModel");
 const Key = process.env.USER_KEY;
 async function verifyUser(req, res, next) {
     const token=req.cookies.token;
-    
     try{
         if(!token){
         res.status(401).send('Access denied..');
@@ -25,6 +27,7 @@ async function verifyUser(req, res, next) {
 
 async function register(req, res) {
     try {
+        console.log(req.body)
         const { email, username, password } = req.body;
        
         const existUser = await UserModel.findOne({
@@ -165,12 +168,23 @@ async function updateuser(req, res) {
 }
 
 async function generateOTP(req, res) {
+    const {username}=req.params
     req.app.locals.OTP = await otpGenerator.generate(4, {
         lowerCaseAlphabets: false,
         upperCaseAlphabets: false,
         specialChars: false,
     });
-    res.status(201).send({ code: req.app.locals.OTP });
+    let OTP = req.app.locals.OTP;
+    try{
+    const user=await userModel.find({username:username})
+    const response = await OTPmail({ OTP: OTP ,emailID:user[0].email});
+        res.status(200).send({ msg: 'OTP send successfully!' });
+      }
+      catch(err){
+          res.send('error')
+      }
+
+
 }
 
 async function verifyOTP(req, res) {

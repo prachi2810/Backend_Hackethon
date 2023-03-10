@@ -12,9 +12,11 @@ conn.once('open', () => {
 });
 
 saveTemplate=async(req,res)=>{
-    const {html,css,assets,userId,   name, domain}=req.body;
+  console.log('request received')
+    const {html,css,assets,userId, name, tags}=req.body;
+    console.log(req.body)
       const thumbnail=req.file.path;
-       const newTemplate=new Template({html,css,assets,userId,thumbnail,   name, domain});
+       const newTemplate=new Template({html,css,assets,userId,thumbnail,  name,tags});
      try{
         const ans=await newTemplate.save();
         res.send(ans);
@@ -26,6 +28,7 @@ saveTemplate=async(req,res)=>{
 
 getAllTemplates=async(req,res)=>{
     const allTemplate=await Template.find()
+    
    const ids= await Promise.all(allTemplate.map(async(item)=>{
     const bucket = new GridFSBucket(conn.db, { bucketName: 'uploads' });
     const image = await bucket.find({ _id: item.thumbnail }).toArray();

@@ -19,12 +19,10 @@ const storage = new GridFsStorage({
   });
  
   const upload = multer({ storage: storage });
-  
 router.post('/saveTemplate',upload.single('thumbnail'),async(req,res)=>{
-    const {html,css,assets,userId,   name, domain}=req.body;
+    const {html,css,assets,userId,   name, tags}=req.body;
       const thumbnail=req.file.id;
-      console.log(thumbnail)
-       const newTemplate=new Template({html,css,assets,userId,thumbnail,   name, domain});
+       const newTemplate=new Template({html,css,assets,userId,thumbnail, name,tags});
      try{
         const ans=await newTemplate.save();
         res.send(ans);
