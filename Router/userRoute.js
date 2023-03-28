@@ -9,7 +9,7 @@ const controller = require('../Controller/appController');
 // POST Method
 router.route('/register').post(controller.register);
 router.route('/registerByGoogle').post(controller.registerByGoogle);
-router.route('/registerMail').post(registermail);
+// router.route('/registerMail').post(registermail);
 router.route('/authenticate').post((req, res) => res.end());
 router.route('/login').post(controller.login);
 router.route('/loginByGoogle').post(controller.loginByGoogle);

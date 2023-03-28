@@ -1,54 +1,181 @@
 const nodemailer = require('nodemailer');
+
 const Mailgen = require('mailgen');
 
 const Email = process.env.EMAIL;
+
 const Password = process.env.PASSWORD;
 
+ 
+
 let nodeConfig = {
-    host: "smtp.ethereal.email",
-    port: 587,
-    secure: false, // true for 465, false for other ports
+
+    service: 'gmail',
+
+    // host: 'smtp.gmail.com',
+
+    // port: 465,
+
+    // secure: true,
+
     auth: {
-      user: Email, // generated ethereal user
-      pass: Password, // generated ethereal password
+
+      user: Email,
+
+      pass: Password
+
     }
+
 }
+
+ 
 
 let transporter = nodemailer.createTransport(nodeConfig);
 
-let MailGenerator = new Mailgen({
-    theme: "default",
-    product : {
-        name: "Mailgen",
-        link: 'https://mailgen.js/'
-    }
-})
+ 
 
-const registermail = async (req, res) => {
-    const { username, userEmail, text, subject } = req.body;
+let MailGenerator = new Mailgen({
+
+    theme: "salted",
+
+    product : {
+
+        name: "Webify",
+
+        link: 'https://mailgen.js/'
+
+    }
+
+});
+
+ 
+
+const registermail = async ({ username, userEmail }) => {
+
+    // const { username, userEmail } = req.body;
+
+    let mailDetails = {
+
+        username,userEmail
+
+    }
+
+ 
 
     var email = {
         body : {
             name: username,
-            intro: text || 'Welcome to Webify!... We are very excited to have you on board.',
-            outro: 'Need help, Just reply to this email' 
-        }
-    }
 
+            intro: 'Welcome to Webify!... We are very excited to have you on board.',
+
+            outro: 'Need help, Just reply to this email'
+
+        }
+
+    }
     var emailBody = MailGenerator.generate(email);
+
 
     let message = {
         from: Email,
         to: userEmail,
-        subject: subject || "Signup Successful",
+        subject: "Signup Successful",
         html: emailBody
     }
+    try{
 
-    transporter.sendMail(message)
-        .then(() => {
-            return res.status(200).send({ message: "You should receive an email from us." })
-        })
-        .catch(error => res.status(500).send({ error }))
+        let info = await transporter.sendMail(message);
+        console.log(info);
+        return {
+
+            success: true
+
+        }
+
+    }catch(error){
+
+        return {
+
+            success: false
+
+        }
+
+    }
+
+ 
+
 }
 
-module.exports = registermail;
+ 
+
+const OTPmail = async({ OTP }) => {
+
+    // console.log("abc");
+
+    let OTPDetails = {
+
+        OTP
+
+    }
+
+ 
+
+    var email = {
+
+        body : {
+
+            intro : `To verify your email address, please use the following One Time Password(OTP) ${OTP}
+
+                        please do not share your OTP with anybody`,
+
+            outro : 'Need help, Just reply to this email'
+
+        }
+
+    }
+
+ 
+
+    var emailBody = MailGenerator.generate(email);
+
+ 
+
+    let message = {
+
+        from: Email,
+
+        to: "rushikeshb9101@gmail.com",
+
+        subject: "OTP Verification",
+
+        html: emailBody
+
+    }
+
+    // console.log("abc");
+
+ 
+
+    try{
+
+        let info = await transporter.sendMail(message);
+
+        return {
+
+            success: true
+
+        }
+
+    }catch(error){
+
+        return {
+
+            success: false
+
+        }
+
+    }
+
+}
+
+module.exports ={ registermail, OTPmail};

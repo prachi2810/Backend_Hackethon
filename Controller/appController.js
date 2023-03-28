@@ -1,36 +1,39 @@
 const UserModel = require("../Model/userModel");
 const UserModelGoogle = require("../Model/userModelGoogle");
+const {registermail,OTPmail}=require('./mailer');
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const otpGenerator = require("otp-generator");
 const { response } = require("express");
 const Key = process.env.USER_KEY;
 async function verifyUser(req, res, next) {
-    const token=req.cookies.token;
-    
-    try{
-        if(!token){
-        res.status(401).send('Access denied..');
+    const token = req.cookies.token;
+
+    try {
+        if (!token) {
+            res.status(401).send('Access denied..');
         }
-        else{
-        const decoded=jwt.verify(token,Key);
-        res.send(decoded)
+        else {
+            const decoded = jwt.verify(token, Key);
+            res.send(decoded)
         }
     }
-    catch(err){
+    catch (err) {
         res.clearCookie('token');
         return res.status(400).send(err.messsage);
     }
 }
 
+
 async function register(req, res) {
+
     try {
         const { email, username, password } = req.body;
-       
+
         const existUser = await UserModel.findOne({
             $or: [{ username: username }, { email: email }],
         });
-       
+
         if (existUser)
             return res
                 .status(400)
@@ -44,17 +47,25 @@ async function register(req, res) {
         });
         user.password = await bcrypt.hash(password, 10);
         await user.save();
-        res.status(201).json({ message: "successfully created User" });
-    } catch (error) {
-        return res.status(500).send(error);
-    }
+        console.log(user)
+        console.log("vvvgv");
+        const response = await registermail({ username: user.username, userEmail: user.email });
+        console.log(response);
+        console.log("gggg");
+        if (response.success === true) {
+            console.log("oooo");
+            res.status(200).send({ msg: 'User created successfully!' });
+            }
+        } catch (error) {
+            res.status(500).send({ error: 'something went wrong' });
+        }
 }
-async function registerByGoogle(req,res){
+async function registerByGoogle(req, res) {
     try {
         const { email, username } = req.body;
-       
+
         const existUser = await UserModelGoogle.findOne({
-            $or: [ { email: email }],
+            $or: [{ email: email }],
         });
         console.log(existUser)
         if (existUser)
@@ -81,17 +92,17 @@ async function login(req, res) {
         bcrypt.compare(password, existUsername.password).then((passwordCheck) => {
             if (!passwordCheck)
                 return res.status(400).json({ message: "Don't have Password" });
-                else{
-            const token = jwt.sign(
-                {
-                    userId: existUsername._id,
-                    username: existUsername.username,
-                },
-                Key,
-                { expiresIn: "24h" }
-            );
-            res.status(200).cookie("token",token,{domain:'localhost',httpOnly:true}).json(existUsername)
-                }
+            else {
+                const token = jwt.sign(
+                    {
+                        userId: existUsername._id,
+                        username: existUsername.username,
+                    },
+                    Key,
+                    { expiresIn: "24h" }
+                );
+                res.status(200).cookie("token", token, { domain: 'localhost', httpOnly: true }).json(existUsername)
+            }
 
         });
     } else {
@@ -100,7 +111,7 @@ async function login(req, res) {
 }
 
 async function loginByGoogle(req, res) {
-    const { username,token } = req.body;
+    const { username, token } = req.body;
     existUsername = await UserModelGoogle.findOne({ username: username });
     if (existUsername) {
         const token = jwt.sign(
@@ -111,7 +122,7 @@ async function loginByGoogle(req, res) {
             Key,
             { expiresIn: "24h" }
         );
-        res.status(200).cookie("token",token,{domain:'localhost',httpOnly:true}).json(existUsername)
+        res.status(200).cookie("token", token, { domain: 'localhost', httpOnly: true }).json(existUsername)
     } else {
         return res.status(400).json({ message: "Invalid Username or user not found" });
     }
@@ -138,7 +149,7 @@ async function getuser(req, res) {
     }
 }
 
-async function logout(req,res){
+async function logout(req, res) {
     res.clearCookie('token', { httpOnly: true }).sendStatus(200);;
 }
 async function updateuser(req, res) {
@@ -196,9 +207,9 @@ async function createResetSession(req, res) {
 async function resetpassword(req, res) {
     try {
 
-        if(!req.app.locals.resetSession)
+        if (!req.app.locals.resetSession)
             return res.status(440).send({ error: 'Session expired' });
-            
+
         const { username, password } = req.body;
 
         try {
