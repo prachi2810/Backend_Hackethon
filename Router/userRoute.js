@@ -25,5 +25,5 @@ router.route('/logout').get(controller.logout)
 // PUT Method
 router.route('/updateuser').put(Auth, controller.updateuser);
 router.route('/resetpassword').put(controller.verifyUser, controller.resetpassword);
-
+router.route('/forgotpassword').put(controller.forgotPassword);
 module.exports=router;

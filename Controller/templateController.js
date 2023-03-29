@@ -2,7 +2,8 @@ const Template=require('../Model/templateModel')
 const mongoose=require('mongoose');
 const Grid = require('gridfs-stream');
 const { GridFSBucket } = require('mongodb');
-
+const jwt = require("jsonwebtoken");
+const Key = process.env.USER_KEY;
 const conn = mongoose.connection;
 let gfs;
 conn.once('open', () => {
@@ -25,20 +26,25 @@ saveTemplate=async(req,res)=>{
    }
 }
 
-getAllTemplates=async(req,res)=>{
-    const allTemplate=await Template.find()
-   
-   const ids= await Promise.all(allTemplate.map(async(item)=>{
-    const bucket = new GridFSBucket(conn.db, { bucketName: 'uploads' });
-    const image = await bucket.find({ _id: item.thumbnail }).toArray();
+getAllTemplates = async (req, res) => {
 
-    const imageData = await bucket.openDownloadStream(image[0]._id).toArray();
+  const token=req.cookies.token;
+  const decoded=jwt.verify(token,Key);
+  const {userId}=decoded;
+  const approvedTemplates = await Template.find({isApproved:true,status:"public"});
+  let allTemplates=await Template.find({status:"private",userId});
+  allTemplates=[...allTemplates,...approvedTemplates]
+  const ids = await Promise.all(
+    allTemplates.map(async (item) => {
+      const bucket = new GridFSBucket(conn.db, { bucketName: "uploads" });
+      const image = await bucket.find({ _id: item.thumbnail }).toArray();
+      const imageData = await bucket.openDownloadStream(image[0]._id).toArray();
+      return { ...item, thumbnail: imageData[0].toString("base64") };
+    })
+  );
+  res.status(200).json(ids);
+};
 
-   return {...item, thumbnail:  imageData[0].toString('base64')  }
-    }))
-   
-   res.json(ids);
-}
 getPerticularTemplate=async(req,res)=>{
   try{
     const id=req.params.id;
@@ -75,4 +81,22 @@ getAllTemplatesByTags = async (req, res) => {
   res.status(200).json(ids);
 }
 
-module.exports={saveTemplate,getAllTemplates,getPerticularTemplate,updateTemplate,getAllTemplatesByTags}
+getUnapprovedTemplates = async (req, res) => {
+  const allTemplate = await Template.find({isApproved:false,status:"public"});
+  
+  res.status(200).json(allTemplate);
+};
+approveTemplate=async(req,res)=>{
+  const {id}=req.params;
+  try{
+  const result=await Template.findByIdAndUpdate(id,{isApproved:true},{new:true});
+   res.status(200).json(result)
+  }catch(err)
+  {
+    res.status(500).json({message:'something went wrong'})
+  }
+
+}
+
+module.exports={saveTemplate,getAllTemplates,getPerticularTemplate,updateTemplate,getAllTemplatesByTags,
+  getUnapprovedTemplates,approveTemplate}

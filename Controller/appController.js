@@ -241,6 +241,78 @@ async function resetpassword(req, res) {
     }
 }
 
+async function forgotPassword(req,res) {
+
+    try {
+
+ 
+
+        if (!req.app.locals.resetSession)
+
+            return res.status(440).send({ error: 'Session expired' });
+
+ 
+
+        const { username, password } = req.body;
+
+ 
+
+        try {
+
+ 
+
+            UserModel.findOne({ username })
+
+                .then(user => {
+
+                    bcrypt.hash(password, 10)
+
+                        .then(hashedPassword => {
+
+                            UserModel.updateOne({ username: user.username }, { password: hashedPassword },
+
+                                function (err, data) {
+
+                                    if (err) throw err;
+
+                                    return res.status(201).send({ message: 'Password changed' })
+
+                                });
+
+                        })
+
+                        .catch(error => {
+
+                            return res.status(500).send({ error: 'Enable to hash password' })
+
+                        })
+
+                })
+
+                .catch(error => {
+
+                    return res.status(404).send({ error: 'Username not found' });
+
+                })
+
+ 
+
+        } catch (error) {
+
+            return res.status(500).send({ error })
+
+        }
+
+ 
+
+    } catch (error) {
+
+        return res.status(401).send({ error })
+
+    }
+
+}
+
 
 module.exports = {
     register,
@@ -254,5 +326,6 @@ module.exports = {
     verifyUser,
     logout,
     registerByGoogle,
-    loginByGoogle
+    loginByGoogle,
+    forgotPassword
 };
