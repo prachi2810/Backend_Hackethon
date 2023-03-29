@@ -13,6 +13,12 @@ const templateSchema = new Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'uploads.files'
   },
+  isApproved:{
+    type:Boolean
+  },
+  status:{
+    type:String,
+  },
    name:String,
    domain:String
    

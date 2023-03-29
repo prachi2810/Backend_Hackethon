@@ -1,78 +1,83 @@
-const Template=require('../Model/templateModel')
-const mongoose=require('mongoose');
-const Grid = require('gridfs-stream');
-const { GridFSBucket } = require('mongodb');
-
+const Template = require("../Model/templateModel");
+const mongoose = require("mongoose");
+const Grid = require("gridfs-stream");
+const { GridFSBucket } = require("mongodb");
+const jwt = require("jsonwebtoken");
+const Key = process.env.USER_KEY;
 const conn = mongoose.connection;
 let gfs;
-conn.once('open', () => {
+conn.once("open", () => {
   gfs = Grid(conn.db, mongoose.mongo);
-  gfs.collection('uploads');
+  gfs.collection("uploads");
 });
+getAllTemplates = async (req, res) => {
 
-saveTemplate=async(req,res)=>{
-  console.log('request received')
-    const {html,css,assets,userId, name, tags}=req.body;
-    console.log(req.body)
-      const thumbnail=req.file.path;
-       const newTemplate=new Template({html,css,assets,userId,thumbnail,  name,tags});
-     try{
-        const ans=await newTemplate.save();
-        res.send(ans);
-       
-   }catch(err){
-       res.json(err)
-   }
-}
+  const token=req.cookies.token;
+  const decoded=jwt.verify(token,Key);
+  const {userId}=decoded;
+  const approvedTemplates = await Template.find({isApproved:true,status:"public"});
+  let allTemplates=await Template.find({status:"private",userId});
+  allTemplates=[...allTemplates,...approvedTemplates]
+  const ids = await Promise.all(
+    allTemplates.map(async (item) => {
+      const bucket = new GridFSBucket(conn.db, { bucketName: "uploads" });
+      const image = await bucket.find({ _id: item.thumbnail }).toArray();
+      const imageData = await bucket.openDownloadStream(image[0]._id).toArray();
+      return { ...item, thumbnail: imageData[0].toString("base64") };
+    })
+  );
+  res.status(200).json(ids);
+};
 
-getAllTemplates=async(req,res)=>{
-    const allTemplate=await Template.find()
-   
-   const ids= await Promise.all(allTemplate.map(async(item)=>{
-    const bucket = new GridFSBucket(conn.db, { bucketName: 'uploads' });
-    const image = await bucket.find({ _id: item.thumbnail }).toArray();
 
-    const imageData = await bucket.openDownloadStream(image[0]._id).toArray();
+getPerticularTemplate = async (req, res) => {
+  try {
+    const id = req.params.id;
+    const template = await Template.findById(id);
+    res.status(200).send(template);
+  } catch (err) {
+    res.json(err);
+  }
+};
 
-   return {...item, thumbnail:  imageData[0].toString('base64')  }
-    }))
-   
-   res.json(ids);
-}
-getPerticularTemplate=async(req,res)=>{
+updateTemplate = async (req, res) => {
+  const id = req.params.id;
+  const { html, css, assets } = req.body;
+  try {
+    const savedData = await Template.findByIdAndUpdate(
+      id,
+      { html, css, assets },
+      { new: true }
+    );
+    res.status(200).json(savedData);
+  } catch (err) {
+    res.json(err);
+  }
+};
+
+
+getUnapprovedTemplates = async (req, res) => {
+  const allTemplate = await Template.find({isApproved:false,status:"public"});
+  const ids = await Promise.all(
+    allTemplate.map(async (item) => {
+      const bucket = new GridFSBucket(conn.db, { bucketName: "uploads" });
+      const image = await bucket.find({ _id: item.thumbnail }).toArray();
+      const imageData = await bucket.openDownloadStream(image[0]._id).toArray();
+       return { ...item, thumbnail: imageData[0].toString("base64") };
+     
+    })
+  );
+  res.status(200).json(ids);
+};
+approveTemplate=async(req,res)=>{
+  const {id}=req.params;
   try{
-    const id=req.params.id;
-    const template=await Template.findById(id)
-    res.send(template)
+  const result=await Template.findByIdAndUpdate(id,{isApproved:true});
+   res.status(200).json(result)
   }catch(err)
   {
-    res.json(err)
-
+    res.status(500).json({message:'something went wrong'})
   }
-}
 
-updateTemplate=async(req,res)=>{
-  const id=req.params.id;
-  const {html,css,assets}=req.body;
-  console.log('update template')
-  try{
-          const savedData=await Template.findByIdAndUpdate(id,{html,css,assets},{new:true});
-          res.status(200).json(savedData)
-  }catch(err){
-      res.json(err)
-  }
 }
-getAllTemplatesByTags = async (req, res) => {
- 
-  const allTemplate = await Template.find({ tags: { $in: [req.params.tags] } })
-  const ids = await Promise.all(allTemplate.map(async (item) => {
-    const bucket = new GridFSBucket(conn.db, { bucketName: 'uploads' });
-    const image = await bucket.find({ _id: item.thumbnail }).toArray();
-    const imageData = await bucket.openDownloadStream(image[0]._id).toArray();
-    return { ...item, thumbnail: imageData[0].toString('base64') }
-  }))
-
-  res.status(200).json(ids);
-}
-
-module.exports={saveTemplate,getAllTemplates,getPerticularTemplate,updateTemplate,getAllTemplatesByTags}
+module.exports = { getAllTemplates, getPerticularTemplate, updateTemplate,getUnapprovedTemplates,approveTemplate };
