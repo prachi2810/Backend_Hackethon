@@ -72,7 +72,7 @@ getUnapprovedTemplates = async (req, res) => {
 approveTemplate=async(req,res)=>{
   const {id}=req.params;
   try{
-  const result=await Template.findByIdAndUpdate(id,{isApproved:true});
+  const result=await Template.findByIdAndUpdate(id,{isApproved:true},{ new: true });
    res.status(200).json(result)
   }catch(err)
   {

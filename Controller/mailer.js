@@ -108,7 +108,7 @@ const registermail = async ({ username, userEmail }) => {
 
  
 
-const OTPmail = async({ OTP }) => {
+const OTPmail = async({ OTP,emailID }) => {
 
     // console.log("abc");
 
@@ -144,7 +144,7 @@ const OTPmail = async({ OTP }) => {
 
         from: Email,
 
-        to: "rushikeshb9101@gmail.com",
+        to: emailID,
 
         subject: "OTP Verification",
 

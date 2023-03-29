@@ -63,7 +63,7 @@ describe("register user", () => {
 
     const res = await chai
       .request(app)
-      .post("/user/user/register")
+      .post("/user/register")
       .send(requestBody);
 
     expect(res).to.have.status(400);
@@ -160,7 +160,7 @@ describe('get User function', function() {
   it('should return user data if user is found', async () => {
     const user = { username: 'pratik', name: 'Pratik' };
     findOneStub.resolves(user);
-    const res = await chai.request(app).get('/user/pratik');
+    const res = await chai.request(app).get('/user/user/pratik');
     expect(res).to.have.status(201);
     expect(res.body).to.deep.equal(user);
   });

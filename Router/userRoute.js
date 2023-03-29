@@ -13,8 +13,8 @@ router.route('/login').post(controller.login);
 
 // GET Method
 
-//router.get('/generateOTP/:username', AuthFile.localVeriables, controller.generateOTP);
-//router.route('/verifyOTP').get(controller.verifyOTP);
+router.get('/generateOTP/:username', controller.generateOTP);
+router.route('/verifyOTP').get(controller.verifyOTP);
 //router.route('/createResetSession').get(controller.createResetSession);
 router.route('/isLoggedIn').get(controller.verifyUser)
 router.route('/logout').get(controller.logout)
@@ -22,6 +22,5 @@ router.route('/user/:username').get(controller.getuser);
 
 // PUT Method
 //router.route('/updateuser').put(AuthFile.Auth, controller.updateuser);
-//router.route('/resetpassword').put(controller.verifyUser, controller.resetpassword);
-
+router.route('/forgotPassword').put( controller.forgotPassword);
 module.exports=router;
